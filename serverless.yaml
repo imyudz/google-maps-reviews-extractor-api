@@ -1,0 +1,84 @@
+service: maps-reviews-api
+
+useDotenv: true
+
+package:
+  individually: true
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: us-east-2
+  stage: ${opt:stage, "dev"}
+  architecture: x86_64
+  environment:
+    APP_NAME: ${env:APP_NAME}
+    APP_ENV: ${env:APP_ENV}
+    DB_HOST: ${env:DB_HOST}
+    DB_USERNAME: ${env:DB_USERNAME}
+    DB_PASSWORD: ${env:DB_PASSWORD}
+    DB_PORT: ${env:DB_PORT}
+    JWT_SECRET: ${env:JWT_SECRET}
+    ALGORITHM: ${env:ALGORITHM}
+    ACCESS_TOKEN_EXPIRE_MINUTES: ${env:ACCESS_TOKEN_EXPIRE_MINUTES}
+    SUPABASE_URL: ${env:SUPABASE_URL}
+    SUPABASE_KEY: ${env:SUPABASE_KEY}
+    SUPABASE_ADMIN_KEY: ${env:SUPABASE_ADMIN_KEY}
+    AUTH_EMAIL: ${env:AUTH_EMAIL}
+    AUTH_PWD: ${env:AUTH_PWD}
+    COINGECKO_API_KEY: ${env:COINGECKO_API_KEY}
+    COINGECKO_BASE_URL: ${env:COINGECKO_BASE_URL}
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    useStaticCache: false
+    useDownloadCache: false
+    pipCmdExtraArgs:
+      - "--platform manylinux2014_x86_64"
+      - "--implementation cp" 
+      - "--python-version 3.11"
+      - "--only-binary=:all:"
+      - "--upgrade"
+    # usePoetry: true
+    # dockerizePip: true
+    layer:
+      name: maps-reviews-api-layer
+      description: Layer for maps-reviews-api
+      compatibleRuntimes:
+        - python3.11
+      compatibleArchitectures:
+        - x86_64
+
+functions:
+  app:
+    package:
+      include:
+        - "api/**"
+        - "config/**"
+      exclude:
+        - "package.json"
+        - "package-lock.json"
+        - ".serverless/**"
+        - ".virtualenv/**"
+        - "node_modules/**"
+        - "poetry.lock"
+        - "pyproject.toml"
+        - "yarn.lock"
+        - "package-lock.json"
+        - "requirements.txt"
+        - "README.md"
+        - "STRUCTURE.md"
+        - "scripts/**"
+    handler: api.main.handler
+    environment:
+      STAGE: ${self:provider.stage}
+
+    layers:
+      - { Ref: PythonRequirementsLambdaLayer }
+    events:
+      - http:
+          method: any
+          path: /{proxy+} 

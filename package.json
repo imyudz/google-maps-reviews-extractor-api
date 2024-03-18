@@ -1,0 +1,8 @@
+{
+    "name": "google-reviews-api",
+    "version": "1.0.0",
+    "author": "Victor Henri Vargas",
+    "devDependencies": {
+        "serverless-python-requirements": "^6.0.1"
+    }
+}

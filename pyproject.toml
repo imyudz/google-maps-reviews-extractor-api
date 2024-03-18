@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "api"
+version = "1.0.0"
+description = "Reviews Exctraxtor and analysis API for Google Maps"
+authors = ["Victor Henri S. Vargas <103096096+imyudz@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+supabase = "^2.3.4"
+fastapi = "^0.109.2"
+uvicorn = {extras = ["standard"], version = "^0.27.0.post1"}
+python-multipart = "^0.0.9"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-dotenv = "^1.0.1"
+faker = "^23.2.0"
+numpy = "^1.26.4"
+pandas = "^2.2.0"
+pydantic = {extras = ["email"], version = "^2.6.1"}
+requests = "^2.31.0"
+mangum = "^0.17.0"
+pydantic-core = "^2.16.3"
+scrapy = "^2.11.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poe.tasks.serve]
+cwd = "./api"
+control.expr = "sys.platform"
+
+[[tool.poe.tasks.serve.switch]]
+case = "win32"
+cmd = "python -m uvicorn main:app --reload"
+
+[[tool.poe.tasks.serve.switch]]
+cmd = "uvicorn main:app --reload"
