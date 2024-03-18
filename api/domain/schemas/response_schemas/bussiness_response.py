@@ -4,7 +4,7 @@ from pydantic import BaseModel
 class CreateBussiness(BaseModel):
     bussiness_id: int
     bussiness_name: str
-    status: int
+    status: str
     total_reviews: int
     medium_reviews_rate: float
     bussiness_base_url: str

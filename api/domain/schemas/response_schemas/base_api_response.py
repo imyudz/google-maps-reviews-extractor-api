@@ -1,5 +1,5 @@
 from pydantic import BaseModel
 
 class BaseApiResponse(BaseModel):
-    status: str
+    status: int
     content: str

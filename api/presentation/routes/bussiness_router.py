@@ -11,10 +11,13 @@ bussiness_router = __APIRouter(
 )
 
 @bussiness_router.post("/create")
-def create_new_bussiness(req_body: _CreateBussinessRequest) -> _CreateBussinessResponse:
+def create_new_bussiness(req_body: _CreateBussinessRequest, background_tasks: __BackgroundTasks) -> _CreateBussinessResponse:
     try:
         new_bussiness = _create_new_bussiness_usecase(req_body)
     except Exception as e:
         print(e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    
+        
     return _CreateBussinessResponse(status=status.HTTP_201_CREATED, content=new_bussiness)
+
