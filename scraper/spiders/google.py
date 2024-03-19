@@ -52,17 +52,17 @@ class GoogleSpider(scrapy.Spider):
 
             review_date = review.xpath('.//span[@class="dehysf lTi8oc"]/text()').extract_first()
 
-            self.review_buffer.append({
+            new_review = {
                 'reviewer': reviewer,
                 'description': description,
                 'review_rating': review_rating,
                 'review_date': review_date
-            })
+            }
             
-            if len(self.review_buffer) >= 50 or not all_reviews:
-                self.insert_reviews_to_database()
+            # if len(self.review_buffer) >= 50 or not all_reviews:
+            #     self.insert_reviews_to_database()
             
-            yield
+            yield new_review
 
     def insert_reviews_to_database(self):
         if self.review_buffer:

@@ -24,3 +24,15 @@ async def create_new_bussiness(req_body: _CreateBussinessRequest, background_tas
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     return _CreateBussinessResponse(status=status.HTTP_201_CREATED, content=new_bussiness)
 
+
+@bussiness_router.get("/crawl")
+def crawl_bussiness():
+    try:
+        threading.Thread(target=run_google_scraper(
+            "https://www.google.com/search?q=Escola+Estadual+Salvador+Moya&oq=Escola+Estadual+Salvador+Moya&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIICAEQABgNGB4yCAgCEAAYDRgeMggIAxAAGA0YHjIICAQQABgNGB4yCAgFEAAYDRgeMgYIBhBFGDwyBggHEEUYPDIGCAgQRRg80gEHMTg0ajBqNKgCALACAA&sourceid=chrome&ie=UTF-8",
+            12
+        )).start()
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    return __JSONResponse(status_code=__status.HTTP_200_OK, content="ok")
