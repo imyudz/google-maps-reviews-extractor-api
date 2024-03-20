@@ -44,7 +44,7 @@ def crawl_bussiness():
         subprocess.run(command)
 
         with open("tmp/reviews.json", 'r') as f:
-            return __JSONResponse(status_code=__status.HTTP_200_OK, content=)
+            return __JSONResponse(status_code=__status.HTTP_200_OK, content="ok")
         
     except Exception as e:
         print(e)
