@@ -1,13 +1,12 @@
-from click import command
+from cgi import test
+from urllib import response
 from fastapi import APIRouter as __APIRouter, status as __status, BackgroundTasks as __BackgroundTasks
-from fastapi.encoders import jsonable_encoder
-from api.domain.schemas.request_schemas.bussiness_request import CreateBussinessRequest as _CreateBussinessRequest
+from api.domain.schemas.request_schemas.bussiness_request import CreateBussinessRequest as _CreateBussinessRequest, ExtractBussinessReviewsRequest as _ExtractBussinessReviewsRequest
 from api.domain.schemas.response_schemas.bussiness_response import CreateBussinessResponse as _CreateBussinessResponse
 from fastapi.responses import JSONResponse as __JSONResponse
-from api.usecases.bussiness_usescases import create_new_bussiness as _create_new_bussiness_usecase
-from scraper.routines.run import run_google_scraper
+from api.domain.schemas.response_schemas.base_api_response import BaseApiResponse as __BaseApiResponse
+from api.usecases.bussiness_usescases import create_new_bussiness as _create_new_bussiness_usecase, extract_all_bussiness_reviews as _extract_bussiness_reviews
 from fastapi import status, HTTPException
-import threading
 
 bussiness_router = __APIRouter(
     prefix="/bussiness",
@@ -15,39 +14,27 @@ bussiness_router = __APIRouter(
 )
 
 @bussiness_router.post("/create")
-async def create_new_bussiness(req_body: _CreateBussinessRequest, background_tasks: __BackgroundTasks) -> _CreateBussinessResponse:
+async def create_new_bussiness(req_body: _CreateBussinessRequest) -> _CreateBussinessResponse:
     try:
         new_bussiness = _create_new_bussiness_usecase(req_body)
-        if new_bussiness:
-            threading.Thread(target=run_google_scraper, args=(new_bussiness.bussiness_base_url, new_bussiness.bussiness_id)).start()
-            background_tasks.add_task(run_google_scraper, new_bussiness.bussiness_base_url, new_bussiness.bussiness_id)
     except Exception as e:
         print(e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     return _CreateBussinessResponse(status=status.HTTP_201_CREATED, content=new_bussiness)
 
 
-@bussiness_router.get("/crawl")
-def crawl_bussiness():
+@bussiness_router.post("/extract-reviews")
+def crawl_bussiness_reviews(req_body: _ExtractBussinessReviewsRequest, background_tasks: __BackgroundTasks) -> __BaseApiResponse:
     try:
-        import subprocess
-        # threading.Thread(target=run_google_scraper(
-        #     "https://www.google.com/search?q=Escola+Estadual+Salvador+Moya&oq=Escola+Estadual+Salvador+Moya&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIICAEQABgNGB4yCAgCEAAYDRgeMggIAxAAGA0YHjIICAQQABgNGB4yCAgFEAAYDRgeMgYIBhBFGDwyBggHEEUYPDIGCAgQRRg80gEHMTg0ajBqNKgCALACAA&sourceid=chrome&ie=UTF-8",
-        #     12
-        # )).start()
-        command = [
-            "scrapy", "crawl", "google",
-           "-a", f"base_url=https://www.google.com/search?q=Escola+Estadual+Salvador+Moya&oq=Escola+Estadual+Salvador+Moya&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIICAEQABgNGB4yCAgCEAAYDRgeMggIAxAAGA0YHjIICAQQABgNGB4yCAgFEAAYDRgeMgYIBhBFGDwyBggHEEUYPDIGCAgQRRg80gEHMTg0ajBqNKgCALACAA&sourceid=chrome&ie=UTF-8",
-           "-a", f"bussiness_id=12",
-           "-o", "tmp/reviews.json"
-        ]
-        subprocess.run(command)
+        _extract_bussiness_reviews(req_body.bussiness_id, background_tasks)
 
-        with open("tmp/reviews.json", 'r') as f:
-            return __JSONResponse(status_code=__status.HTTP_200_OK, content="ok")
+        response = __BaseApiResponse(
+            status=__status.HTTP_200_OK,
+            content="Task Successfully Running in Background. Wait some time while we proccess your reviews"
+        )
         
+        return response
     except Exception as e:
         print(e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-    

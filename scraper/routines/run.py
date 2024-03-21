@@ -1,7 +1,16 @@
-from scrapy.crawler import CrawlerProcess
-from scrapy.utils.project import get_project_settings
+import subprocess
+import os
 
-def run_google_scraper(base_url: str, bussiness_id: int):
-    process = CrawlerProcess(get_project_settings())
-    process.crawl("google", base_url=base_url, bussiness_id=bussiness_id)
-    process.start()
+def run_google_scraper(bussiness_id: int, base_url: str):
+    if os.path.exists("../tmp/reviews.json"):
+        os.remove("../tmp/reviews.json")
+        
+    command = [
+        "scrapy", "crawl", "google",
+        "-a", f"base_url={base_url}",
+        "-a", f"bussiness_id={bussiness_id}",
+        "-o", "../tmp/reviews.json"
+    ]
+    subprocess.run(command)
+    
+    

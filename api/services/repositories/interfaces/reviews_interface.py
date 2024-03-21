@@ -6,11 +6,8 @@ class ReviewsInterface(Generic[T]):
     def insert_reviews(self, reviews: _InsertReviewModel | list[_InsertReviewModel]) -> T:
         raise NotImplementedError
     
-    def get_reviews(self, bussiness_id: int) -> T:
+    def get_reviews_by_bussiness_id(self, bussiness_id: int) -> T:
         raise NotImplementedError
     
-    def get_reviews_by_bussiness_id(self, bussiness_name: str) -> T:
+    def drop_all_reviews(self, bussiness_id: int) -> bool:
         raise NotImplementedError
-    
-     
-    

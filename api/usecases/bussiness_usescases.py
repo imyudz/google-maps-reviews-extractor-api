@@ -3,11 +3,17 @@ from api.domain.schemas.response_schemas.bussiness_response import CreateBussine
 from api.services.connectors.maps_api_connector import MapsAPIConnector as __MapsAPIConnector
 from api.domain.schemas.request_schemas.maps_api import PlacesRequest as _PlacesRequest
 from api.utils.url_utils import mount_bussiness_base_url as _mount_bussiness_base_url
+from api.utils.file_utils import delete_if_exists as _delete_if_exists
 from api.services.repositories.bussiness_repository import BussinessRepository as _BussinessRepository
 from api.domain.models.dao.bussiness import InsertBussinessModel as _InsertBussinessModel
+from fastapi.background import BackgroundTasks as __BackgroundTasks
+from api.services.repositories.reviews_repository import ReviewsRespository as _ReviewsRespository
+from scraper.routines.run import run_google_scraper as _run_google_scraper
 import logging
-__maps_api = __MapsAPIConnector()
 
+__maps_api = __MapsAPIConnector()
+__bussiness_repository = _BussinessRepository()
+__reviews_repository = _ReviewsRespository()
 
 def _get_place_id_and_real_address(bussiness_full_address: str, bussiness_maps_name: str) -> dict[str, str]:
     text_search = f"{bussiness_maps_name} {bussiness_full_address}"
@@ -42,7 +48,7 @@ def create_new_bussiness(bussiness: _CreateBussinessRequest) -> _CreateBussiness
             total_ratings=bussiness_general_data["total_reviews"],
         )
         
-        inserted_bussiness = _BussinessRepository().insert_bussiness(
+        inserted_bussiness = __bussiness_repository.insert_bussiness(
             bussiness=new_bussiness
         )
         
@@ -54,5 +60,19 @@ def create_new_bussiness(bussiness: _CreateBussinessRequest) -> _CreateBussiness
             bussiness_base_url=inserted_bussiness.maps_reviews_url,
             total_reviews=inserted_bussiness.total_ratings
         )       
+    except Exception as e:
+        raise e
+
+
+def extract_all_bussiness_reviews(bussiness_id: int, background_tasks: __BackgroundTasks) -> None:
+    try:
+        if len(__reviews_repository.get_reviews_by_bussiness_id(bussiness_id)) > 0:
+            __reviews_repository.drop_all_reviews(bussiness_id)
+        
+        bussiness_url: str = __bussiness_repository.get_bussiness_info_by_id(bussiness_id).maps_reviews_url
+        
+        background_tasks.add_task(_run_google_scraper, bussiness_id, bussiness_url)
+        
+        return True
     except Exception as e:
         raise e
