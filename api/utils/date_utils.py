@@ -109,4 +109,4 @@ def timestamp_to_date(timestamp: int) -> datetime:
         datetime: Data correspondente ao timestamp.
     """
 
-    return datetime.fromtimestamp(timestamp, tz=pytz.timezone('America/Sao_Paulo)'))
+    return datetime.fromtimestamp(timestamp, tz=pytz.timezone('America/Sao_Paulo'))

@@ -1,10 +1,10 @@
-import logging
-
-import pandas as pd
 from fastapi.background import BackgroundTasks as __BackgroundTasks
+import datetime
 
+from numpy import insert
 from api.domain.models.dao.bussiness import \
     InsertBussinessModel as _InsertBussinessModel
+from api.domain.models.dao.review import InsertReviewModel, ReviewModel
 from api.domain.schemas.request_schemas.bussiness_request import \
     CreateBussinessRequest as _CreateBussinessRequest
 from api.domain.schemas.request_schemas.maps_api import \
@@ -19,9 +19,11 @@ from api.services.repositories.bussiness_repository import \
     BussinessRepository as _BussinessRepository
 from api.services.repositories.reviews_repository import \
     ReviewsRespository as _ReviewsRespository
+from api.utils.date_utils import timestamp_to_date as _timestamp_to_date
 from api.utils.url_utils import \
     mount_bussiness_base_url as _mount_bussiness_base_url
 from scraper.routines.run import run_google_scraper as _run_google_scraper
+import pandas as pd
 
 __maps_api = __MapsAPIConnector()
 __bussiness_repository = _BussinessRepository()
@@ -43,8 +45,27 @@ def _get_reviews_general_data(place_id: str) -> dict[str,str]:
 
 def _search_last_reviews(place_id: str):
     response: _ReviewsResponse = __maps_api.get_place_rating(place_id)
-    reviews = response.result.reviews
-    return pd.DataFrame(reviews)
+    return response.result.reviews
+    
+def _verify_diff_reviews(reviews: list[ReviewModel], new_reviews: list[ReviewModel]) -> list[InsertReviewModel]:
+    df_reviews = pd.DataFrame.from_records([review.dict(exclude=["id", "time"]) for review in reviews])
+    df_new_reviews = pd.DataFrame.from_records([new_review.dict() for new_review in new_reviews], exclude=["id"])
+    
+    # print(df_new_reviews)
+    # print(df_reviews)
+
+    df_reviews["description"] = df_reviews["description"].str.replace(r": 5/5", "", regex=True)
+
+    print(df_new_reviews)
+    print(df_reviews)
+    
+    merged = pd.merge(df_reviews, df_new_reviews, on=["author_name", "rating", "description", "fk_bussiness_id"], how="outer", indicator=True)
+    new_reviews_df = merged[merged["_merge"] == "right_on"]
+    
+    insert_reviews = [InsertReviewModel(**r) for r in new_reviews_df.to_dict(orient="records")]
+
+    return insert_reviews
+    
     
 
 def create_new_bussiness(bussiness: _CreateBussinessRequest) -> _CreateBussiness:
@@ -80,6 +101,8 @@ def create_new_bussiness(bussiness: _CreateBussinessRequest) -> _CreateBussiness
         )       
     except Exception as e:
         raise e
+    
+
 
 
 def extract_all_bussiness_reviews(bussiness_id: int, background_tasks: __BackgroundTasks) -> None:
@@ -95,21 +118,34 @@ def extract_all_bussiness_reviews(bussiness_id: int, background_tasks: __Backgro
     except Exception as e:
         raise e
 
-def get_latest_bussiness_reviews(bussiness_id: int, maps_place_id: str) -> None:
+def get_latest_bussiness_reviews(bussiness_id: int, maps_place_id: str) -> list[ReviewModel]:
     try:
         existent_reviews = __reviews_repository.get_reviews_by_bussiness_id(bussiness_id, latest=True)
-        print(existent_reviews)
         
         if len(existent_reviews) == 0:
             raise ValueError("No historic reviews for this bussiness")
 
-        new_reviews = _search_last_reviews(maps_place_id)
+        maps_new_reviews = _search_last_reviews(maps_place_id)
         
-        print(new_reviews)
+        maps_reviews_formatted = [ReviewModel(
+            id=0,
+            rating=review.rating,
+            author_name=review.author_name,
+            description=review.text,
+            time=_timestamp_to_date(review.time),
+            fk_bussiness_id=bussiness_id,
+        ) for review in maps_new_reviews]
         
-        # Verificar similaridade entre as avaliações
         
-
+        diff_reviews = _verify_diff_reviews(existent_reviews, maps_reviews_formatted)
+        
+        if len(diff_reviews) == 0:
+            return []
+        
+        print(diff_reviews)
+        
+        response = __reviews_repository.insert_reviews(diff_reviews)
+        return response
     except Exception as e:
         raise e
 

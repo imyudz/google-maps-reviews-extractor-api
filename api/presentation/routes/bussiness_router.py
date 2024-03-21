@@ -55,11 +55,13 @@ def crawl_bussiness_reviews(req_body: _ExtractBussinessReviewsRequest, backgroun
 @bussiness_router.get("/update-reviews/{bussiness_id}/{maps_place_id}")
 def update_bussiness_reviews(bussiness_id: int, maps_place_id: str):
     try:
-        _get_latest_bussiness_reviews(bussiness_id, maps_place_id)
+        reviews = _get_latest_bussiness_reviews(bussiness_id, maps_place_id)
+        if len(reviews) == 0:
+            return __JSONResponse(status_code=status.HTTP_200_OK, content={"status": "no new reviews", "reviews": reviews})
     except Exception as e:
         print(e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    return __JSONResponse(status_code=status.HTTP_200_OK, content="ok")
+    return __JSONResponse(status_code=status.HTTP_200_OK, content={"status": "success", "reviews": reviews})
 
 @bussiness_router.get("/info/{bussiness_id}")
 def bussiness_information(bussiness_id: int) -> BussinessModel:

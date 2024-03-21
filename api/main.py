@@ -13,7 +13,7 @@ openapi_prefix = f"/{stage}" if stage else "/"
 
 app = FastAPI(
     title="Google Maps Reviews API",
-    description="API de acesso ao PlayCrypto",
+    description="API de extração e análises de dados de reviews baseados em uma empresa existente no Google Maps.",
     root_path=openapi_prefix
 )
 
