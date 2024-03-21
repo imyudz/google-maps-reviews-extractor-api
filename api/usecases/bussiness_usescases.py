@@ -17,7 +17,7 @@ __reviews_repository = _ReviewsRespository()
 def _get_place_id_and_real_address(bussiness_full_address: str, bussiness_maps_name: str) -> dict[str, str]:
     text_search = f"{bussiness_maps_name} {bussiness_full_address}"
     response = __maps_api.get_place_id(_PlacesRequest(textQuery=text_search))
-    print(response)
+    # print(response)
     return {
         "place_id": response.places[0].id, 
         "address": response.places[0].formattedAddress

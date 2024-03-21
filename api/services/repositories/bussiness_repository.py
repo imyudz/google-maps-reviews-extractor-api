@@ -15,7 +15,6 @@ class BussinessRepository(_BussinessInterface):
         
     def insert_bussiness(self, bussiness: _InsertBussinessModel) -> _BussinessModel:
         query = self.__client.table("bussinesses").insert(bussiness.model_dump(), returning="representation")
-        print(query)
         try:
             response: __ApiResponse = query.execute()
         except Exception as e:

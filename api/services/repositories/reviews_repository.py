@@ -24,7 +24,7 @@ class ReviewsRespository(_ReviewsInterface):
         query = self.__client.table("reviews").insert(_encoder(reviews), returning='representation')
         try:
             response: __ApiResponse = query.execute()
-            print(response)
+            # print(response)
         except Exception as e:
             raise e
         return [_ReviewModel(**review) for review in response.data]
