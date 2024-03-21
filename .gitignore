@@ -175,3 +175,6 @@ node_modules
 
 # serverless
 .serverless/
+
+#Temporary files
+/tmp
