@@ -3,9 +3,11 @@ from fastapi import BackgroundTasks as __BackgroundTasks
 from fastapi import HTTPException
 from fastapi import status
 from fastapi import status as __status
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse as __JSONResponse
 
 from api.domain.models.dao.bussiness import BussinessModel
+from api.domain.models.dao.review import ReviewModel
 from api.domain.schemas.request_schemas.bussiness_request import \
     CreateBussinessRequest as _CreateBussinessRequest
 from api.domain.schemas.request_schemas.bussiness_request import \
@@ -14,6 +16,8 @@ from api.domain.schemas.response_schemas.base_api_response import \
     BaseApiResponse as __BaseApiResponse
 from api.domain.schemas.response_schemas.bussiness_response import \
     CreateBussinessResponse as _CreateBussinessResponse
+from api.services.repositories.bussiness_repository import BussinessRepository
+from api.services.repositories.reviews_repository import ReviewsRespository
 from api.usecases.bussiness_usescases import bussiness_info as _bussiness_info
 from api.usecases.bussiness_usescases import \
     create_new_bussiness as _create_new_bussiness_usecase
@@ -61,7 +65,7 @@ def update_bussiness_reviews(bussiness_id: int, maps_place_id: str):
     except Exception as e:
         print(e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    return __JSONResponse(status_code=status.HTTP_200_OK, content={"status": "success", "reviews": reviews})
+    return __JSONResponse(status_code=status.HTTP_200_OK, content={"status": "success", "reviews": jsonable_encoder(reviews)})
 
 @bussiness_router.get("/info/{bussiness_id}")
 def bussiness_information(bussiness_id: int) -> BussinessModel:
@@ -72,3 +76,11 @@ def bussiness_information(bussiness_id: int) -> BussinessModel:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     return __JSONResponse(status_code=status.HTTP_200_OK, content=bussiness.model_dump())
 
+@bussiness_router.get("/reviews/{bussiness_id}")
+def get_all_reviews(bussiness_id: int) -> list[ReviewModel]:
+    try:
+        response = ReviewsRespository().get_reviews_by_bussiness_id(bussiness_id)
+        
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    return __JSONResponse(status_code=status.HTTP_200_OK, content={"status_code": 200, "data": jsonable_encoder(response)})
