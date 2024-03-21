@@ -17,6 +17,7 @@ __reviews_repository = _ReviewsRespository()
 def _get_place_id_and_real_address(bussiness_full_address: str, bussiness_maps_name: str) -> dict[str, str]:
     text_search = f"{bussiness_maps_name} {bussiness_full_address}"
     response = __maps_api.get_place_id(_PlacesRequest(textQuery=text_search))
+    print(response)
     return {
         "place_id": response.places[0].id, 
         "address": response.places[0].formattedAddress
@@ -35,7 +36,7 @@ def create_new_bussiness(bussiness: _CreateBussinessRequest) -> _CreateBussiness
         
         bussiness_general_data = {**place_id_and_real_address, **reviews_general_data}
         
-        link = _mount_bussiness_base_url(bussiness.maps_name)
+        link = _mount_bussiness_base_url(bussiness.maps_name, place_id_and_real_address["address"])
         
         new_bussiness = _InsertBussinessModel(
             maps_name=bussiness.maps_name,
@@ -54,7 +55,7 @@ def create_new_bussiness(bussiness: _CreateBussinessRequest) -> _CreateBussiness
         return _CreateBussiness(
             bussiness_id=inserted_bussiness.id,
             bussiness_name=inserted_bussiness.simple_name,
-            status="CREATED",
+            status="New Bussiness Created, Extracting reviews ocurring in background",
             medium_reviews_rate=inserted_bussiness.medium_rate,
             bussiness_base_url=inserted_bussiness.maps_reviews_url,
             total_reviews=inserted_bussiness.total_ratings

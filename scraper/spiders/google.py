@@ -56,25 +56,8 @@ class GoogleSpider(scrapy.Spider):
                 'reviewer': reviewer,
                 'description': description,
                 'review_rating': review_rating,
-                'review_date': review_date
+                'review_date': review_date,
+                'bussiness_id': self.bussiness_id
             }
             
-            # if len(self.review_buffer) >= 50 or not all_reviews:
-            #     self.insert_reviews_to_database()
-            
             yield new_review
-
-    def insert_reviews_to_database(self):
-        if self.review_buffer:
-            reviews_to_insert = self.review_buffer[:]
-            self.review_buffer.clear()
-            
-            formatted_reviews = [_InsertReviewModel(
-                author_name=review_data['reviewer'],
-                description=review_data['description'],
-                fk_bussiness_id=self.bussiness_id,
-                rating=review_data['review_rating'],
-                time=calcular_data(review_data['review_date']).astimezone(pytz.timezone('America/Sao_Paulo')).isoformat()
-            ) for review_data in reviews_to_insert]
-            
-            ReviewsRespository().insert_reviews(formatted_reviews)

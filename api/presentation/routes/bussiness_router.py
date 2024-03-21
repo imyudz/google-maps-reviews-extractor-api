@@ -1,5 +1,3 @@
-from cgi import test
-from urllib import response
 from fastapi import APIRouter as __APIRouter, status as __status, BackgroundTasks as __BackgroundTasks
 from api.domain.schemas.request_schemas.bussiness_request import CreateBussinessRequest as _CreateBussinessRequest, ExtractBussinessReviewsRequest as _ExtractBussinessReviewsRequest
 from api.domain.schemas.response_schemas.bussiness_response import CreateBussinessResponse as _CreateBussinessResponse
@@ -14,9 +12,11 @@ bussiness_router = __APIRouter(
 )
 
 @bussiness_router.post("/create")
-async def create_new_bussiness(req_body: _CreateBussinessRequest) -> _CreateBussinessResponse:
+async def create_new_bussiness(req_body: _CreateBussinessRequest, background_tasks: __BackgroundTasks) -> _CreateBussinessResponse:
     try:
         new_bussiness = _create_new_bussiness_usecase(req_body)
+        if new_bussiness:
+            _extract_bussiness_reviews(new_bussiness.bussiness_id, background_tasks)
     except Exception as e:
         print(e)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
