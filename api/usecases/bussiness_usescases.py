@@ -3,7 +3,6 @@ from api.domain.schemas.response_schemas.bussiness_response import CreateBussine
 from api.services.connectors.maps_api_connector import MapsAPIConnector as __MapsAPIConnector
 from api.domain.schemas.request_schemas.maps_api import PlacesRequest as _PlacesRequest
 from api.utils.url_utils import mount_bussiness_base_url as _mount_bussiness_base_url
-from api.utils.file_utils import delete_if_exists as _delete_if_exists
 from api.services.repositories.bussiness_repository import BussinessRepository as _BussinessRepository
 from api.domain.models.dao.bussiness import InsertBussinessModel as _InsertBussinessModel
 from fastapi.background import BackgroundTasks as __BackgroundTasks
