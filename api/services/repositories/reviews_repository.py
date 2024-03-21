@@ -29,8 +29,10 @@ class ReviewsRespository(_ReviewsInterface):
             raise e
         return [_ReviewModel(**review) for review in response.data]
     
-    def get_reviews_by_bussiness_id(self, bussinees_id: str) -> list[_ReviewModel]:
+    def get_reviews_by_bussiness_id(self, bussinees_id: str, latest: bool = False) -> list[_ReviewModel]:
         query = self.__client.table("reviews").select("*", count="exact").eq("fk_bussiness_id", bussinees_id).order("time", desc=True)
+        if latest:
+            query = query.limit(5)
         try:
             response: __ApiResponse = query.execute()
             if response.count == 0:

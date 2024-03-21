@@ -1,14 +1,27 @@
-from api.domain.schemas.request_schemas.bussiness_request import CreateBussinessRequest as _CreateBussinessRequest
-from api.domain.schemas.response_schemas.bussiness_response import CreateBussiness as _CreateBussiness
-from api.services.connectors.maps_api_connector import MapsAPIConnector as __MapsAPIConnector
-from api.domain.schemas.request_schemas.maps_api import PlacesRequest as _PlacesRequest
-from api.utils.url_utils import mount_bussiness_base_url as _mount_bussiness_base_url
-from api.services.repositories.bussiness_repository import BussinessRepository as _BussinessRepository
-from api.domain.models.dao.bussiness import InsertBussinessModel as _InsertBussinessModel
-from fastapi.background import BackgroundTasks as __BackgroundTasks
-from api.services.repositories.reviews_repository import ReviewsRespository as _ReviewsRespository
-from scraper.routines.run import run_google_scraper as _run_google_scraper
 import logging
+
+import pandas as pd
+from fastapi.background import BackgroundTasks as __BackgroundTasks
+
+from api.domain.models.dao.bussiness import \
+    InsertBussinessModel as _InsertBussinessModel
+from api.domain.schemas.request_schemas.bussiness_request import \
+    CreateBussinessRequest as _CreateBussinessRequest
+from api.domain.schemas.request_schemas.maps_api import \
+    PlacesRequest as _PlacesRequest
+from api.domain.schemas.response_schemas.bussiness_response import \
+    CreateBussiness as _CreateBussiness
+from api.domain.schemas.response_schemas.maps_api import \
+    ReviewsResponse as _ReviewsResponse
+from api.services.connectors.maps_api_connector import \
+    MapsAPIConnector as __MapsAPIConnector
+from api.services.repositories.bussiness_repository import \
+    BussinessRepository as _BussinessRepository
+from api.services.repositories.reviews_repository import \
+    ReviewsRespository as _ReviewsRespository
+from api.utils.url_utils import \
+    mount_bussiness_base_url as _mount_bussiness_base_url
+from scraper.routines.run import run_google_scraper as _run_google_scraper
 
 __maps_api = __MapsAPIConnector()
 __bussiness_repository = _BussinessRepository()
@@ -17,7 +30,6 @@ __reviews_repository = _ReviewsRespository()
 def _get_place_id_and_real_address(bussiness_full_address: str, bussiness_maps_name: str) -> dict[str, str]:
     text_search = f"{bussiness_maps_name} {bussiness_full_address}"
     response = __maps_api.get_place_id(_PlacesRequest(textQuery=text_search))
-    # print(response)
     return {
         "place_id": response.places[0].id, 
         "address": response.places[0].formattedAddress
@@ -28,6 +40,12 @@ def _get_reviews_general_data(place_id: str) -> dict[str,str]:
         "total_reviews": response.result.user_ratings_total,
         "medium_rate": response.result.rating
     }
+
+def _search_last_reviews(place_id: str):
+    response: _ReviewsResponse = __maps_api.get_place_rating(place_id)
+    reviews = response.result.reviews
+    return pd.DataFrame(reviews)
+    
 
 def create_new_bussiness(bussiness: _CreateBussinessRequest) -> _CreateBussiness:
     try:
@@ -74,5 +92,29 @@ def extract_all_bussiness_reviews(bussiness_id: int, background_tasks: __Backgro
         background_tasks.add_task(_run_google_scraper, bussiness_id, bussiness_url)
         
         return True
+    except Exception as e:
+        raise e
+
+def get_latest_bussiness_reviews(bussiness_id: int, maps_place_id: str) -> None:
+    try:
+        existent_reviews = __reviews_repository.get_reviews_by_bussiness_id(bussiness_id, latest=True)
+        print(existent_reviews)
+        
+        if len(existent_reviews) == 0:
+            raise ValueError("No historic reviews for this bussiness")
+
+        new_reviews = _search_last_reviews(maps_place_id)
+        
+        print(new_reviews)
+        
+        # Verificar similaridade entre as avaliações
+        
+
+    except Exception as e:
+        raise e
+
+def bussiness_info(bussiness_id: int) -> _CreateBussiness:
+    try:
+        return __bussiness_repository.get_bussiness_info_by_id(bussiness_id)
     except Exception as e:
         raise e

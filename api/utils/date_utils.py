@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import List
+import pytz
 
 def calcular_data(atraso: str) -> datetime:
     """
@@ -96,3 +97,16 @@ def _tratar_um(texto: str) -> int:
     if texto.lower() == "um" or texto.lower() == "uma":
         return 1
     return int(texto)
+
+def timestamp_to_date(timestamp: int) -> datetime:
+    """
+    Converte um timestamp em uma data.
+
+    Args:
+        timestamp (int): Timestamp em segundos.
+
+    Returns:
+        datetime: Data correspondente ao timestamp.
+    """
+
+    return datetime.fromtimestamp(timestamp, tz=pytz.timezone('America/Sao_Paulo)'))
