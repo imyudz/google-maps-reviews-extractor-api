@@ -78,6 +78,10 @@ def _calcular_data_atrasada(hoje: datetime, quantidade: int, unidade: str) -> da
         data_atrasada = hoje - timedelta(days=quantidade * 365)
     elif unidade == "hora" or unidade == "horas":
         data_atrasada = hoje - timedelta(hours=quantidade)
+    elif unidade == "minuto" or unidade == "minutos":
+        data_atrasada = hoje - timedelta(minutes=quantidade)
+    elif unidade == "segundo" or unidade == "segundos":
+        data_atrasada = hoje - timedelta(seconds=quantidade)
     else:
         raise ValueError(f"Unidade de tempo '{unidade}' não suportada")
 
